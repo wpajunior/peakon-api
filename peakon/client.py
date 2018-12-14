@@ -1,5 +1,6 @@
 import requests
-import pdb
+from peakon.resources.drivers import Drivers
+from peakon.resources.segments import Segments
 
 
 class Client(object):
@@ -13,11 +14,20 @@ class Client(object):
         self.token = token
         self.api_base_url = 'https://api.peakon.com/v1/'
         self.__http_header = self.__create_http_header()
+        self.drivers = Drivers(self)
+        self.segments = Segments(self)
     
-    def get(self, path, filter):
+    def get(self, path):
         """ Makes the get request to the API """
-        response = requests.get(self.api_base_url + path, headers=self.__http_headers, stream=False).json()
-    
+        result = requests.get(self.api_base_url + path, headers=self.__http_header, stream=False, timeout=60).json()
+
+        try:
+            status = result['status']
+            message = result['message']
+        except KeyError:
+            return result
+        else:
+            raise RuntimeError('Error fetching data status code: {}. Message: {}'.format(status, message))
 
     def __create_http_header(self):
         return {'Authorization': 'Bearer ' + self.token,
